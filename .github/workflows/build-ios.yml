@@ -3,11 +3,17 @@ name: Build iPhone app
 on:
   push:
     branches: [main]
-    tags: ["v*"]
-    paths: ["ios/**", ".github/workflows/build-ios.yml", "CHANGELOG.md"]
+    paths: ["ios/**", ".github/workflows/build-ios.yml"]
   pull_request:
     paths: ["ios/**", ".github/workflows/build-ios.yml"]
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "To publish a release, type its tag (for example v1.0.0). Leave empty to only build."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -51,7 +57,7 @@ jobs:
           path: ios/Tethercam.ipa
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release' || inputs.release_tag != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -64,13 +70,19 @@ jobs:
           name: Tethercam-ipa
 
       - name: Release notes from CHANGELOG.md
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          version="${TAG#v}"
           awk -v v="$version" '/^## /{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md > notes.md
           cat notes.md
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
+          name: tethercam ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
           body_path: notes.md
           files: |
             Tethercam.ipa
