@@ -1,0 +1,41 @@
+name: Bug report
+description: Tethercam does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you. Please do not put personal information (Apple ID, phone number, serial number) in this report.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Tell us what you did and what you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Text in the black window
+      description: Copy the text from the tethercam window on your PC.
+      render: text
+  - type: input
+    id: ios
+    attributes:
+      label: iPhone model and iOS version
+      placeholder: iPhone 13, iOS 18.1
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+  - type: dropdown
+    id: itunes
+    attributes:
+      label: Apple USB drivers
+      options:
+        - iTunes from apple.com
+        - iTunes from the Microsoft Store
+        - Apple Devices app
+        - I do not know

@@ -1,0 +1,35 @@
+# XcodeGen spec: `xcodegen generate` turns this into Tethercam.xcodeproj.
+# GitHub Actions does this for you, so you never need a Mac.
+name: Tethercam
+options:
+  bundleIdPrefix: io.github.tethercam
+  deploymentTarget:
+    iOS: "15.0"
+targets:
+  Tethercam:
+    type: application
+    platform: iOS
+    sources: [Tethercam]
+    scheme: {}
+    info:
+      path: Tethercam/Info.plist
+      properties:
+        CFBundleDisplayName: Tethercam
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSCameraUsageDescription: Tethercam sends your camera to your PC over the USB cable so you can use it as a webcam.
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSupportsIndirectInputEvents: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.tethercam.app
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""

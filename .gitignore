@@ -1,0 +1,12 @@
+ios/build/
+ios/*.xcodeproj/
+ios/Payload/
+*.ipa
+__pycache__/
+*.pyc
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.mobileprovision

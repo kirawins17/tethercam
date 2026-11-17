@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest an idea for Tethercam.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: Tell us the problem. Then tell us your idea.
+    validations:
+      required: true
