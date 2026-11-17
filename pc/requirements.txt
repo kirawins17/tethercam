@@ -1,4 +1,4 @@
 pyvirtualcam>=0.11,<1
 opencv-python>=4.8,<5
 numpy>=1.24,<3
-av>=12,<20
+av>=19.0.2,<20
