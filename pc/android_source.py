@@ -15,15 +15,17 @@ import shutil
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.request
+from collections import deque
 
 SCRCPY_VERSION = "3.3.2"
 SERVER_URL = (f"https://github.com/Genymobile/scrcpy/releases/download/"
               f"v{SCRCPY_VERSION}/scrcpy-server-v{SCRCPY_VERSION}")
 SERVER_SHA256 = "2ee5ca0863ef440f5b7c75856bb475c5283d0a8359cb370b1c161314fd29dfd9"
 DEVICE_PATH = "/data/local/tmp/tethercam-scrcpy-server.jar"
-LOCAL_PORT = 27183
+FIRST_FRAME_TIMEOUT = 15  # seconds; some cameras are slow to start
 
 
 def data_dir():
@@ -134,7 +136,13 @@ def frames(serial=None, facing="back", max_size=1280, max_fps=30):
         raise ConnectionError(f"Could not copy the scrcpy server to the phone: {push.stderr.strip()}")
 
     scid = random.randint(0, 0x7FFFFFFF)
-    _run(adb, "forward", f"tcp:{LOCAL_PORT}", f"localabstract:scrcpy_{scid:08x}", serial=serial)
+    # "tcp:0" lets adb pick a free port on this PC, so we never clash with scrcpy.
+    fwd = _run(adb, "forward", "tcp:0", f"localabstract:scrcpy_{scid:08x}", serial=serial)
+    try:
+        port = int(fwd.stdout.strip())
+    except ValueError:
+        detail = (fwd.stderr or fwd.stdout).strip()
+        raise ConnectionError(f"adb could not open the USB tunnel: {detail}") from None
 
     server = subprocess.Popen(
         [adb, "-s", serial, "shell", f"CLASSPATH={DEVICE_PATH}", "app_process", "/",
@@ -146,23 +154,29 @@ def frames(serial=None, facing="back", max_size=1280, max_fps=30):
          "cleanup=true"],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     )
+    # Keep reading the server's messages so its pipe never fills up.
+    log = deque(maxlen=20)
+    threading.Thread(target=lambda: [log.append(line.rstrip()) for line in server.stdout],
+                     daemon=True).start()
 
     sock, first = None, b""
     try:
         # The adb tunnel accepts a connection before the server is ready and
         # then drops it, so retry until the first video bytes arrive.
-        deadline = time.time() + 10
+        deadline = time.time() + FIRST_FRAME_TIMEOUT + 5
         while time.time() < deadline:
             if server.poll() is not None:
-                log = (server.stdout.read() or "").strip().splitlines()
+                time.sleep(0.2)  # let the reader thread collect the last messages
                 hint = log[-1] if log else "the server stopped"
                 if "Android 12" in "\n".join(log):
                     hint = "The camera needs Android 12 or newer."
                 raise ConnectionError(f"Android camera could not start: {hint}")
             try:
-                sock = socket.create_connection(("127.0.0.1", LOCAL_PORT), timeout=5)
+                sock = socket.create_connection(("127.0.0.1", port), timeout=5)
+                sock.settimeout(FIRST_FRAME_TIMEOUT)
                 first = sock.recv(65536)
                 if first:
+                    sock.settimeout(5)
                     break
             except OSError:
                 pass
@@ -179,4 +193,8 @@ def frames(serial=None, facing="back", max_size=1280, max_fps=30):
             sock.close()
         if server.poll() is None:
             server.terminate()
-        _run(adb, "forward", "--remove", f"tcp:{LOCAL_PORT}", serial=serial)
+            try:
+                server.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                server.kill()
+        _run(adb, "forward", "--remove", f"tcp:{port}", serial=serial)

@@ -52,7 +52,8 @@ def usb_service_missing_message():
     if sys.platform == "win32":
         return ("Can't reach Apple's USB service. Install iTunes from apple.com "
                 "(not the Microsoft Store), then restart the PC.")
-    return "Can't reach usbmuxd. Install it (for example: sudo apt install usbmuxd) and plug the iPhone in again."
+    return ("Can't reach usbmuxd. Install it (for example: sudo apt install usbmuxd) "
+            "and plug the iPhone in again.")
 
 
 def list_iphones():
@@ -74,7 +75,7 @@ def connect_usb(udid, port=PHONE_PORT):
     try:
         _usbmux_socket().close()
     except OSError:
-        raise ConnectionError(usb_service_missing_message())
+        raise ConnectionError(usb_service_missing_message()) from None
     devices = list_iphones()
     if udid:
         devices = [d for d in devices if d.get("SerialNumber") == udid]

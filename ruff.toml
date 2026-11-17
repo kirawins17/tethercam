@@ -1,0 +1,8 @@
+# Lint settings for the Python code (run: ruff check pc tests)
+line-length = 110
+
+[lint]
+select = ["E", "F", "W", "I", "B"]
+
+[lint.isort]
+known-first-party = ["android_source", "iphone_source", "tethercam"]

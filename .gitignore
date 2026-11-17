@@ -10,3 +10,4 @@ __pycache__/
 *.key
 *.p12
 *.mobileprovision
+.ruff_cache/

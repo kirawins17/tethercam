@@ -1,6 +1,30 @@
 # Changelog
 
-All important changes are in this file. The format follows [Keep a Changelog](https://keepachangelog.com/).
+All important changes are in this file. The format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+## [1.2.0] - 2026-11-17
+
+### Added
+- Each release has `SHA256SUMS.txt` and signed build provenance, so you can check the files.
+- CodeQL code scanning, OpenSSF Scorecard and Dependabot.
+- Code of Conduct, SUPPORT.md, FAQ and Roadmap in the README.
+- Legal notes: trademarks, the pyvirtualcam GPL-2.0 note, and "ask before you record people".
+- `--version` option.
+- Uninstall steps in the README.
+
+### Changed
+- All GitHub Actions are pinned to a full commit SHA.
+- `install.sh` is attached to each release.
+- The installers install the code of the latest release, so the PC part always matches the iPhone app.
+- iPhone app ID is now `io.github.kirawins17.tethercam`. If you installed an older build, delete the old app.
+
+### Fixed
+- Windows installer: the window stays open when there is an error.
+- Windows installer: works on PCs without Internet Explorer, and finds Python in more places.
+- Android: adb picks a free port, slow cameras get 15 seconds to start, and the server stops cleanly.
+- Linux: the camera name shown is "tethercam".
 
 ## [1.1.0] - 2026-11-17
 
@@ -28,3 +52,8 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ### Security
 - The iPhone app accepts connections only from the USB cable, not from Wi-Fi.
+
+[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/kirawins17/tethercam/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/kirawins17/tethercam/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/kirawins17/tethercam/releases/tag/v1.0.0

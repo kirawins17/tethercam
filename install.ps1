@@ -19,9 +19,26 @@ function Refresh-Path {
                 [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
-function Has-Python {
-    try { & python --version *> $null; return $LASTEXITCODE -eq 0 } catch { return $false }
+function Find-Python {
+    # Returns the full path of a real python.exe (3.9+), or $null.
+    # Skips the Microsoft Store "python" stub, and looks where python.org puts it.
+    $probe = 'import sys; print(sys.executable) if sys.version_info >= (3, 9) else None'
+    foreach ($cmd in 'py -3', 'python', 'python3') {
+        $exe, $rest = $cmd -split ' '
+        $pre = @($rest | Where-Object { $_ })
+        if (-not (Get-Command $exe -ErrorAction SilentlyContinue)) { continue }
+        try {
+            $out = (& $exe @pre -c $probe 2>$null | Select-Object -First 1)
+            if ($LASTEXITCODE -eq 0 -and $out -and (Test-Path $out.Trim())) { return $out.Trim() }
+        } catch { }
+    }
+    $found = Get-ChildItem "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe", "$env:ProgramFiles\Python3*\python.exe" -ErrorAction SilentlyContinue |
+             Sort-Object FullName -Descending | Select-Object -First 1
+    if ($found) { return $found.FullName }
+    return $null
 }
+
+function Has-Python { return [bool](Find-Python) }
 
 function Has-Obs {
     return [bool](@("$env:ProgramFiles\obs-studio", "${env:ProgramFiles(x86)}\obs-studio") |
@@ -92,7 +109,7 @@ foreach ($i in $items) {
 }
 Say ''
 Say "Tethercam goes in $dest"
-Say 'Nothing is sent to the internet when you use Tethercam.'
+Say 'Using Tethercam sends nothing to the internet. (Android: it downloads the scrcpy server from GitHub one time.)'
 Say ''
 $answer = Read-Host 'Press Enter to start, or type N to cancel'
 if ($answer -match '^[Nn]') { Say 'Cancelled. Nothing was installed.'; return }
@@ -102,8 +119,11 @@ Step 'Python'
 if (Has-Python) { Say '    Already installed.' 'Green' }
 else {
     Winget-Install 'Python.Python.3.12' 'Python' 'https://www.python.org/downloads/'
-    if (-not (Has-Python)) { throw 'Python is still missing. Install it, then run this installer again.' }
+    if (-not (Has-Python)) { throw 'Python is still missing. Install it from python.org, then run this installer again.' }
 }
+$py = Find-Python
+Say "    Using $py"
+
 
 Step 'OBS Studio (virtual webcam)'
 if (Has-Obs) { Say '    Already installed.' 'Green' }
@@ -119,7 +139,7 @@ if ($wantIphone) {
     else {
         $setup = Join-Path $env:TEMP 'SideloadlySetup64.exe'
         try {
-            Invoke-WebRequest 'https://sideloadly.io/SideloadlySetup64.exe' -OutFile $setup
+            Invoke-WebRequest -UseBasicParsing 'https://sideloadly.io/SideloadlySetup64.exe' -OutFile $setup
             Say '    Opening the Sideloadly installer. Click through it, then come back here.'
             Start-Process $setup -Wait
             Remove-Item $setup -ErrorAction SilentlyContinue
@@ -138,21 +158,38 @@ if ($wantAndroid) {
 }
 
 Step 'Tethercam'
+# Install the code of the latest release, so the PC part matches the iPhone app.
+try {
+    $tag = (Invoke-RestMethod -UseBasicParsing "https://api.github.com/repos/$repo/releases/latest").tag_name
+    $zipUrl = "https://github.com/$repo/archive/refs/tags/$tag.zip"
+    Say "    Version $tag"
+} catch {
+    $zipUrl = "https://github.com/$repo/archive/refs/heads/main.zip"
+}
 $tmp = Join-Path $env:TEMP ('tethercam-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp, $dest -Force | Out-Null
-Invoke-WebRequest "https://github.com/$repo/archive/refs/heads/main.zip" -OutFile "$tmp\src.zip"
+Invoke-WebRequest -UseBasicParsing $zipUrl -OutFile "$tmp\src.zip"
 Expand-Archive "$tmp\src.zip" -DestinationPath $tmp -Force
-Copy-Item "$tmp\tethercam-main\pc\*" $dest -Recurse -Force
+$src = Get-ChildItem $tmp -Directory | Select-Object -First 1
+Copy-Item "$($src.FullName)\pc\*" $dest -Recurse -Force
 Remove-Item $tmp -Recurse -Force
-& python -m pip install -q --disable-pip-version-check -r "$dest\requirements.txt"
+& $py -m pip install -q --disable-pip-version-check -r "$dest\requirements.txt"
 if ($LASTEXITCODE -ne 0) { throw 'Could not install the Python packages. Check your internet and run the installer again.' }
 if ($wantIphone) {
     try {
-        Invoke-WebRequest "https://github.com/$repo/releases/latest/download/Tethercam.ipa" -OutFile "$dest\Tethercam.ipa"
+        Invoke-WebRequest -UseBasicParsing "https://github.com/$repo/releases/latest/download/Tethercam.ipa" -OutFile "$dest\Tethercam.ipa"
     } catch {
         Say "    Could not download Tethercam.ipa. Get it from https://github.com/$repo/releases" 'Yellow'
     }
 }
+# Launcher that uses the exact Python found above.
+Set-Content -Path "$dest\start-tethercam.bat" -Encoding ASCII -Value @(
+    '@echo off',
+    'REM Starts Tethercam. Made by the installer.',
+    'cd /d "%~dp0"',
+    "`"$py`" tethercam.py %*",
+    'pause'
+)
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'Tethercam.lnk'))
 $link.TargetPath = "$dest\start-tethercam.bat"

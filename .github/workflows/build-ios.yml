@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "To publish a release, type its tag (for example v1.0.0). Leave empty to only build."
+        description: "To publish a release, type its tag (for example v1.2.0). Leave empty to only build."
         required: false
         default: ""
 
@@ -22,7 +22,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -51,7 +51,7 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/Tethercam.app Payload/
           zip -qry Tethercam.ipa Payload
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Tethercam-ipa
           path: ios/Tethercam.ipa
@@ -61,24 +61,40 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write      # attach files to the release
+      id-token: write      # sign the build provenance
+      attestations: write  # store the build provenance
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: Tethercam-ipa
 
-      - name: Release notes from CHANGELOG.md
+      - name: Release notes and checksums
         env:
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           version="${TAG#v}"
           awk -v v="$version" '/^## /{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md > notes.md
-          cat notes.md
+          # Stop if the version is not the same everywhere.
+          if ! grep -q '[^[:space:]]' notes.md; then echo "::error::CHANGELOG.md has no section for [$version]"; exit 1; fi
+          grep -q "MARKETING_VERSION: \"$version\"" ios/project.yml || { echo "::error::ios/project.yml MARKETING_VERSION is not $version"; exit 1; }
+          grep -q "__version__ = \"$version\"" pc/tethercam.py || { echo "::error::pc/tethercam.py __version__ is not $version"; exit 1; }
+          sha256sum Tethercam.ipa Install-Tethercam.bat install.sh > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
-      - uses: softprops/action-gh-release@v2
+      - name: Sign build provenance (public repos only)
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            Tethercam.ipa
+            Install-Tethercam.bat
+            install.sh
+
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ env.TAG }}
           name: tethercam ${{ env.TAG }}
@@ -87,3 +103,5 @@ jobs:
           files: |
             Tethercam.ipa
             Install-Tethercam.bat
+            install.sh
+            SHA256SUMS.txt

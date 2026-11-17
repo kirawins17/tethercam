@@ -9,6 +9,7 @@ iPhone or Android · Windows or Linux
 [![CI](https://github.com/kirawins17/tethercam/actions/workflows/ci.yml/badge.svg)](https://github.com/kirawins17/tethercam/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/kirawins17/tethercam)](https://github.com/kirawins17/tethercam/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kirawins17/tethercam/badge)](https://scorecard.dev/viewer/?uri=github.com/kirawins17/tethercam)
 
 <img src="docs/demo.gif" alt="A phone connects to a PC with a USB cable. The PC shows the phone camera in a video call." width="720">
 
@@ -28,7 +29,7 @@ Works with Discord, Zoom, Teams, OBS and Google Meet. No Wi-Fi. No account. Free
 curl -fsSL https://raw.githubusercontent.com/kirawins17/tethercam/main/install.sh | bash
 ```
 
-The installer asks which phone you have. Then it shows what it will install and asks before it starts. It skips what you already have.
+The installer shows what it will install and asks before it starts. It skips what you already have. On Windows, it also asks which phone you have and installs only what that phone needs.
 
 | It installs | Why you need it |
 |---|---|
@@ -39,7 +40,7 @@ The installer asks which phone you have. Then it shows what it will install and 
 | **Android only:** adb | Lets your PC talk to an Android phone over the cable. |
 | Tethercam | The program and a **Tethercam** shortcut. |
 
-> On Windows, if you see "Windows protected your PC", click **More info › Run anyway**. The file is 4 lines; you can [read it here](Install-Tethercam.bat).
+> On Windows, if you see "Windows protected your PC", click **More info › Run anyway**. The file is only a few lines; you can [read it here](Install-Tethercam.bat).
 
 ### 2. Set up your phone
 
@@ -87,7 +88,7 @@ Put the phone on its side for the best picture.
 | The picture is sideways | Put the phone on its side, or use `--rotate 90`. |
 | Discord does not show the camera | Close Discord fully, then open it again. |
 
-Still stuck? [Ask in Discussions](https://github.com/kirawins17/tethercam/discussions).
+Still stuck? See [SUPPORT.md](SUPPORT.md) or [ask in Discussions](https://github.com/kirawins17/tethercam/discussions).
 
 <details>
 <summary><b>Options</b></summary>
@@ -101,8 +102,10 @@ Add these after the command (`start-tethercam.bat` or `start-tethercam.sh`), or 
 | `--rotate 90` | Turns the picture. Use 0, 90, 180 or 270. |
 | `--mirror` | Flips the picture left to right. |
 | `--width 1920 --height 1080` | Changes the size. The default is 1280 × 720. |
+| `--fps 60` | Changes the frame rate. The default is 30. |
 | `--preview` | Shows the picture in a window on the PC. |
 | `--device <id>` | Selects one phone when more than one is connected. |
+| `--version` | Shows the Tethercam version. Add it to bug reports. |
 
 </details>
 
@@ -113,6 +116,22 @@ Add these after the command (`start-tethercam.bat` or `start-tethercam.sh`), or 
 2. iPhone: install [iTunes](https://www.apple.com/itunes/) (Windows) or `usbmuxd` (Linux), and install `Tethercam.ipa` from [Releases](https://github.com/kirawins17/tethercam/releases/latest) with [Sideloadly](https://sideloadly.io/) or [Sideloader](https://github.com/Dadoum/Sideloader).
 3. Android: install [adb](https://developer.android.com/tools/releases/platform-tools).
 4. Download this repo. Run `pc/start-tethercam.bat` (Windows) or `pc/start-tethercam.sh` (Linux).
+
+</details>
+
+<details>
+<summary><b>Uninstall</b></summary>
+
+**Windows:** delete the **Tethercam** shortcut on the desktop and the folder `%LOCALAPPDATA%\tethercam`. You can uninstall OBS Studio, iTunes, Sideloadly and Android platform-tools in **Settings › Apps** if you do not use them for other things.
+
+**Linux:** run
+
+```sh
+rm -rf ~/.local/share/tethercam ~/.local/share/applications/tethercam.desktop
+sudo rm -f /etc/modules-load.d/tethercam.conf /etc/modprobe.d/tethercam.conf
+```
+
+**iPhone:** delete the Tethercam app. **Android:** turn off USB debugging. Nothing else is left on the phone.
 
 </details>
 
@@ -131,9 +150,56 @@ Android: scrcpy server ─► adb (USB) ─────────► H.264 vid
 
 </details>
 
+## FAQ
+
+<details>
+<summary><b>Is it safe?</b></summary>
+
+Yes. All code is open, and every release is built by GitHub Actions from this code. Each release has a `SHA256SUMS.txt` file, and public releases have signed build provenance, so you can check that the files came from this repository. See [SECURITY.md](SECURITY.md#check-a-download).
+
+</details>
+
+<details>
+<summary><b>Why must I install the iPhone app with Sideloadly?</b></summary>
+
+Tethercam is not in the App Store, so you install it yourself. Sideloadly signs the app with your own Apple ID, so it runs only on your iPhone. With a free Apple ID you must renew it every 7 days.
+
+</details>
+
+<details>
+<summary><b>Does it work on a Mac?</b></summary>
+
+Not yet. macOS already has Continuity Camera for iPhone. Help for Android on macOS is welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+</details>
+
+<details>
+<summary><b>Does it record or upload my video?</b></summary>
+
+No. The video goes from the phone to your PC through the cable and nowhere else. Tethercam has no servers.
+
+</details>
+
+<details>
+<summary><b>Which apps can use it?</b></summary>
+
+Every app that can select a webcam: Discord, Zoom, Teams, Google Meet, OBS and browsers.
+
+</details>
+
+## Roadmap
+
+- Tray icon on Windows ([#1](https://github.com/kirawins17/tethercam/issues/1))
+- Auto-rotate when the phone is upright ([#2](https://github.com/kirawins17/tethercam/issues/2))
+- Frame rate counter in the app ([#3](https://github.com/kirawins17/tethercam/issues/3))
+- More languages for the README ([#4](https://github.com/kirawins17/tethercam/issues/4))
+
+Have an idea? [Start a discussion](https://github.com/kirawins17/tethercam/discussions).
+
 ## Privacy and security
 
 - The video goes only through the USB cable. It never goes to the internet.
+- The only download while you use it: for Android, Tethercam gets the official scrcpy server from GitHub one time.
 - The iPhone app accepts only the cable. Other devices on your Wi-Fi cannot connect to it.
 - No accounts, no analytics, no tracking.
 - Found a security problem? See [SECURITY.md](SECURITY.md).
@@ -150,8 +216,11 @@ The full list, with licenses, is in [CREDITS.md](CREDITS.md).
 
 ## Contribute
 
-Help is welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md). [`good first issue`](https://github.com/kirawins17/tethercam/labels/good%20first%20issue) issues are a good start.
+Help is welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md). [`good first issue`](https://github.com/kirawins17/tethercam/labels/good%20first%20issue) issues are a good start.
 
-## License
+## License and legal
 
-[MIT](LICENSE).
+- Tethercam's code is under the [MIT license](LICENSE). The tools it uses keep their own licenses: see [CREDITS.md](CREDITS.md).
+- Use Tethercam within the law. Ask people before you record or stream them.
+- Tethercam comes with no warranty. See the [license](LICENSE).
+- iPhone is a trademark of Apple Inc., registered in the U.S. and other countries. Android is a trademark of Google LLC. Discord, Zoom and other names are trademarks of their owners. Tethercam is not made by, sponsored by or connected with any of these companies.

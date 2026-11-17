@@ -43,13 +43,17 @@ say "  2. Load the virtual webcam now and at every start-up (named \"tethercam\"
 say "  3. Put Tethercam in $DEST, with its own Python environment."
 say "  4. Add Tethercam to your app menu."
 say ""
-say "Nothing is sent to the internet when you use Tethercam."
+say "Using Tethercam sends nothing to the internet. (Android: it downloads the scrcpy server from GitHub one time.)"
 say ""
 read -r -p "Press Enter to start, or type N to cancel: " ans </dev/tty || true
 case "${ans:-}" in [Nn]*) say "Cancelled. Nothing was installed."; exit 0 ;; esac
 
 step "System packages"
-if [ "$PM" = apt ]; then sudo apt-get update -q; fi
+if [ "$PM" = apt ]; then
+  sudo apt-get update -q
+  # v4l2loopback-dkms builds against the running kernel, so it needs its headers.
+  sudo apt-get install -y "linux-headers-$(uname -r)" || say "    (Kernel headers not found. If the webcam does not load, install them.)"
+fi
 # shellcheck disable=SC2086
 if ! $INSTALL $PKGS; then
   say "Some packages could not be installed. On Fedora, v4l2loopback is in RPM Fusion."
@@ -72,8 +76,18 @@ step "Tethercam"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$DEST"
-curl -fsSL "https://github.com/$REPO/archive/refs/heads/main.tar.gz" | tar xz -C "$TMP"
-cp -r "$TMP/tethercam-main/pc/." "$DEST/"
+# Install the code of the latest release, so the PC part matches the iPhone app.
+TAG="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+  | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n 1 || true)"
+if [ -n "$TAG" ]; then
+  say "    Version $TAG"
+  SRC_URL="https://github.com/$REPO/archive/refs/tags/$TAG.tar.gz"
+else
+  SRC_URL="https://github.com/$REPO/archive/refs/heads/main.tar.gz"
+fi
+curl -fsSL "$SRC_URL" | tar xz -C "$TMP"
+SRC_DIR="$(find "$TMP" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+cp -r "$SRC_DIR/pc/." "$DEST/"
 chmod +x "$DEST/start-tethercam.sh"
 python3 -m venv "$DEST/.venv"
 "$DEST/.venv/bin/pip" install -q --disable-pip-version-check -r "$DEST/requirements.txt"
@@ -86,7 +100,7 @@ cat > "$HOME/.local/share/applications/tethercam.desktop" <<DESKTOP
 Type=Application
 Name=Tethercam
 Comment=Use your phone as a webcam
-Exec=$DEST/start-tethercam.sh
+Exec="$DEST/start-tethercam.sh"
 Terminal=true
 Icon=camera-web
 Categories=AudioVideo;Video;

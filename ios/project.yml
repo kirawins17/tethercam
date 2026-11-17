@@ -2,7 +2,7 @@
 # GitHub Actions does this for you, so you never need a Mac.
 name: Tethercam
 options:
-  bundleIdPrefix: io.github.tethercam
+  bundleIdPrefix: io.github.kirawins17
   deploymentTarget:
     iOS: "15.0"
 targets:
@@ -24,8 +24,8 @@ targets:
         UIApplicationSupportsIndirectInputEvents: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: io.github.tethercam.app
-        MARKETING_VERSION: "1.1.0"
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.kirawins17.tethercam
+        MARKETING_VERSION: "1.2.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1"

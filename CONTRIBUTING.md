@@ -1,6 +1,7 @@
 # Contributing to tethercam
 
 Thank you for your help. This guide tells you how to make a change.
+Please follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Before you start
 
@@ -24,9 +25,10 @@ Thank you for your help. This guide tells you how to make a change.
 ```
 python -m pip install -r pc/requirements.txt
 python -m unittest discover -s tests -v
+python -m pip install ruff && ruff check pc tests
 ```
 
-All tests must pass before you send a pull request.
+All tests and the lint check must pass before you send a pull request.
 
 ## Build the iPhone app
 
@@ -40,6 +42,7 @@ If you have a Mac: install [XcodeGen](https://github.com/yonaskolb/XcodeGen), ru
 - Keep changes small. Do one thing in each pull request.
 - Write simple English in the docs. Use short sentences. Use one instruction in each step.
 - Do not add analytics, tracking or network calls to the internet.
+- Pin every new GitHub Action to a full commit SHA, with the version in a comment (`uses: owner/action@<sha> # v1.2.3`).
 - The iPhone app must accept connections only from the USB cable (loopback). Do not change this.
 - Do not put secrets, API keys or personal data in the code or in issues.
 - If you change the scrcpy version, update `SCRCPY_VERSION` and `SERVER_SHA256` together in `pc/android_source.py`.
@@ -48,6 +51,6 @@ If you have a Mac: install [XcodeGen](https://github.com/yonaskolb/XcodeGen), ru
 ## Release (for maintainers)
 
 1. Add the changes to `CHANGELOG.md` under a new version.
-2. Change `MARKETING_VERSION` in `ios/project.yml`.
-3. Go to **Actions › Build iPhone app › Run workflow** and type the tag (for example `v1.1.0`). Or publish a release on the Releases page.
+2. Change the version in `ios/project.yml` (`MARKETING_VERSION`) and `pc/tethercam.py` (`__version__`). The release stops if they do not match the tag.
+3. Go to **Actions › Build iPhone app › Run workflow** and type the tag (for example `v1.3.0`). Or publish a release on the Releases page.
 4. GitHub Actions builds the app and attaches the files to the release.

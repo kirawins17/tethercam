@@ -23,11 +23,17 @@ Tethercam uses or learns from these projects. Thank you to everyone who made the
 | [OBS Studio](https://github.com/obsproject/obs-studio) | GPL-2.0 | Provides "OBS Virtual Camera" on Windows. Installed separately. |
 | [v4l2loopback](https://github.com/umlaeute/v4l2loopback) | GPL-2.0 | Provides the virtual webcam on Linux. Installed separately. |
 | [libimobiledevice / usbmuxd](https://github.com/libimobiledevice) | LGPL-2.1 / GPL | The iPhone USB link on Linux, and the documentation of the usbmux protocol. Installed separately. |
-| [Android platform-tools (adb)](https://developer.android.com/tools/releases/platform-tools) | Google | The Android USB link. Installed separately. |
+| [Android platform-tools (adb)](https://developer.android.com/tools/releases/platform-tools) | Android SDK license terms | The Android USB link. Installed separately. |
 | [XcodeGen](https://github.com/yonaskolb/XcodeGen) | MIT | Builds the iPhone app project in CI. |
 | [Sideloadly](https://sideloadly.io/) and [Sideloader](https://github.com/Dadoum/Sideloader) | See their sites | Install the iPhone app without the App Store. Installed separately. |
 
-Tethercam's own code is under the [MIT license](LICENSE). The projects above keep their own licenses.
-Tethercam does not include their code in this repository; the installers download them from their official sources.
+## License notes
+
+- Tethercam's own code is under the [MIT license](LICENSE). The projects above keep their own licenses.
+- Tethercam does not include their code in this repository. The installers download them from their official sources.
+- **pyvirtualcam is GPL-2.0.** Tethercam imports it at run time. If you share a package that bundles Tethercam together with pyvirtualcam (for example a single .exe), that combined package must follow the GPL-2.0. Using Tethercam, or sharing its source code, is not affected.
+- **scrcpy server is Apache-2.0.** Tethercam does not redistribute it. Each PC downloads the official file from the scrcpy release page.
+
+This page is information, not legal advice.
 
 iPhone is a trademark of Apple Inc. Android is a trademark of Google LLC. Tethercam is not made by or connected with Apple or Google.

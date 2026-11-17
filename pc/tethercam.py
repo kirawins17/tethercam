@@ -21,6 +21,8 @@ import numpy as np
 import android_source as android
 import iphone_source as iphone
 
+__version__ = "1.2.0"
+
 ROTATIONS = {
     0: None,
     90: cv2.ROTATE_90_CLOCKWISE,
@@ -95,6 +97,7 @@ def main():
     p.add_argument("--mirror", action="store_true", help="Flip the picture left to right")
     p.add_argument("--device", help="Pick one phone (iPhone UDID or Android serial)")
     p.add_argument("--preview", action="store_true", help="Also show a preview window")
+    p.add_argument("--version", action="version", version=f"tethercam {__version__}")
     args = p.parse_args()
 
     import pyvirtualcam  # imported here so the rest can be tested without it
@@ -105,8 +108,9 @@ def main():
     except Exception as e:  # pyvirtualcam raises RuntimeError on both platforms
         sys.exit(f"Could not start the virtual webcam: {e}\n{camera_help()}")
 
-    print(f"Virtual webcam ready: '{cam.device}' at {args.width}x{args.height}.")
-    print(f"In Discord: Settings > Voice & Video > Camera > {cam.device}. Ctrl+C to stop.")
+    name = cam.device if sys.platform == "win32" else "tethercam"
+    print(f"tethercam {__version__}. Virtual webcam ready: '{cam.device}' at {args.width}x{args.height}.")
+    print(f"In Discord: Settings > Voice & Video > Camera > {name}. Ctrl+C to stop.")
 
     with cam:
         while True:
