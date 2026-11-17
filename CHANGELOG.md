@@ -2,6 +2,19 @@
 
 All important changes are in this file. The format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.0] - 2026-11-17
+
+### Added
+- Android support (Android 12 or newer). No app is needed on the phone: Tethercam uses the scrcpy server, checked by SHA-256.
+- Linux support: one-command installer (`install.sh`) for apt, dnf, pacman and zypper. The webcam is named "tethercam".
+- The program finds the plugged-in phone by itself (`--phone auto`).
+- `--camera front` for Android.
+- The Windows installer asks which phone you have and installs only what that phone needs.
+- CREDITS.md with all projects and licenses.
+
+### Changed
+- `--udid` is now `--device` and works for both phone types.
+
 ## [1.0.0] - 2026-11-17
 
 ### Added

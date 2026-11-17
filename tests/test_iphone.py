@@ -1,4 +1,4 @@
-"""Tests for the PC side: usbmux handshake and frame protocol, using a fake iPhone."""
+"""Tests for the iPhone source: usbmux handshake and frame protocol, using a fake iPhone."""
 import os
 import plistlib
 import socket
@@ -11,7 +11,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "pc"))
-import tethercam  # noqa: E402
+import iphone_source as tethercam  # noqa: E402
+import tethercam as main  # noqa: E402
 
 JPEG = cv2.imencode(".jpg", np.full((720, 1280, 3), 90, np.uint8))[1].tobytes()
 
@@ -25,7 +26,11 @@ def fake_usbmuxd(conn, devices, connect_result=0):
         body = plistlib.dumps(obj)
         conn.sendall(struct.pack("<IIII", 16 + len(body), 1, 8, tag) + body)
 
-    req, tag = read()
+    try:
+        req, tag = read()
+    except ConnectionError:  # the client only checked that the service is there
+        conn.close()
+        return
     if req["MessageType"] == "ListDevices":
         write({"DeviceList": devices}, tag)
     elif req["MessageType"] == "Connect":
@@ -71,7 +76,7 @@ class ProtocolTests(unittest.TestCase):
             tethercam.read_frame(a)
 
     def test_fit_letterboxes(self):
-        out = tethercam.fit(np.zeros((1280, 720, 3), np.uint8), 1280, 720)
+        out = main.fit(np.zeros((1280, 720, 3), np.uint8), 1280, 720)
         self.assertEqual(out.shape, (720, 1280, 3))
 
 

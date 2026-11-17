@@ -12,9 +12,12 @@ Thank you for your help. This guide tells you how to make a change.
 
 | Folder | What it is | Language |
 |---|---|---|
-| `pc/` | The Windows program. It reads the video from the cable and sends it to the virtual webcam. | Python |
+| `pc/tethercam.py` | The main program. It finds the phone and sends the picture to the virtual webcam. | Python |
+| `pc/iphone_source.py` | The iPhone link (Apple usbmux, JPEG frames). | Python |
+| `pc/android_source.py` | The Android link (adb, scrcpy server, H.264). | Python |
 | `ios/` | The iPhone app. It reads the camera and sends JPEG frames. | Swift |
-| `tests/` | Tests for `pc/`. They use a fake iPhone, so you do not need a real one. | Python |
+| `install.ps1`, `install.sh` | The Windows and Linux installers. | PowerShell, Bash |
+| `tests/` | Tests for `pc/`. They use a fake iPhone and a fake adb, so you do not need a real phone. | Python |
 
 ## Set up and test the PC part
 
@@ -39,10 +42,12 @@ If you have a Mac: install [XcodeGen](https://github.com/yonaskolb/XcodeGen), ru
 - Do not add analytics, tracking or network calls to the internet.
 - The iPhone app must accept connections only from the USB cable (loopback). Do not change this.
 - Do not put secrets, API keys or personal data in the code or in issues.
+- If you change the scrcpy version, update `SCRCPY_VERSION` and `SERVER_SHA256` together in `pc/android_source.py`.
+- Test on Windows and Linux when you can. Say in the pull request what you tested.
 
 ## Release (for maintainers)
 
 1. Add the changes to `CHANGELOG.md` under a new version.
 2. Change `MARKETING_VERSION` in `ios/project.yml`.
-3. Push a tag, for example `git tag v1.1.0 && git push origin v1.1.0`.
-4. GitHub Actions builds the app and makes the release.
+3. Go to **Actions › Build iPhone app › Run workflow** and type the tag (for example `v1.1.0`). Or publish a release on the Releases page.
+4. GitHub Actions builds the app and attaches the files to the release.

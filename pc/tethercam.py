@@ -1,102 +1,25 @@
-"""tethercam: use your iPhone (plugged in over USB) as a webcam on Windows.
+"""tethercam: use your phone (iPhone or Android, plugged in by USB) as a webcam.
 
-Flow, modelled on scrcpy's design:
-  scrcpy:    adb forward  -> phone-side server -> video socket -> V4L2 sink
-  tethercam: Apple usbmux -> Tethercam app     -> JPEG socket  -> virtual webcam
+Works on Windows and Linux.
 
-The virtual webcam is provided by OBS Studio's "OBS Virtual Camera" driver,
-which Discord, Zoom, Teams, browsers etc. all see as a normal camera.
+  iPhone:  Tethercam app -> Apple usbmux (USB) -> JPEG frames  ┐
+                                                               ├-> virtual webcam
+  Android: scrcpy server -> adb forward (USB)  -> H.264 stream ┘
+
+The virtual webcam is "OBS Virtual Camera" on Windows and a v4l2loopback
+device on Linux. Discord, Zoom, Teams, OBS and browsers see it as a normal camera.
 """
 
 import argparse
-import plistlib
 import socket
-import struct
 import sys
 import time
 
 import cv2
 import numpy as np
 
-PHONE_PORT = 8765
-MAX_FRAME_BYTES = 20 * 1024 * 1024
-
-
-def _usbmux_socket():
-    """Connect to Apple's usbmux service (installed with iTunes / Apple Devices)."""
-    if sys.platform == "win32":
-        return socket.create_connection(("127.0.0.1", 27015), timeout=5)
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.settimeout(5)
-    s.connect("/var/run/usbmuxd")
-    return s
-
-
-def _usbmux_request(sock, payload, tag=1):
-    """Send one plist request and return the plist reply (usbmux protocol v1)."""
-    payload = dict(payload, ClientVersionString="tethercam", ProgName="tethercam")
-    body = plistlib.dumps(payload)
-    sock.sendall(struct.pack("<IIII", 16 + len(body), 1, 8, tag) + body)
-    length, _version, _msg, _tag = struct.unpack("<IIII", recv_exact(sock, 16))
-    return plistlib.loads(recv_exact(sock, length - 16))
-
-
-def connect_usb(udid, port):
-    """Open a TCP connection to `port` on the iPhone, tunnelled over the USB cable."""
-    try:
-        listing = _usbmux_socket()
-    except OSError:
-        raise ConnectionError(
-            "Can't reach Apple's USB service. Install iTunes from apple.com (not the "
-            "Microsoft Store), then restart the PC."
-        )
-    with listing:
-        reply = _usbmux_request(listing, {"MessageType": "ListDevices"})
-    devices = [
-        d.get("Properties", {}) for d in reply.get("DeviceList", [])
-        if d.get("Properties", {}).get("ConnectionType", "USB") == "USB"
-    ]
-    if udid:
-        devices = [d for d in devices if d.get("SerialNumber") == udid]
-    if not devices:
-        raise ConnectionError(
-            "No iPhone found over USB. Plug it in, unlock it, and tap 'Trust' on the phone."
-        )
-
-    sock = _usbmux_socket()
-    reply = _usbmux_request(sock, {
-        "MessageType": "Connect",
-        "DeviceID": devices[0]["DeviceID"],
-        "PortNumber": socket.htons(port),
-    })
-    if reply.get("Number", 1) != 0:
-        sock.close()
-        raise ConnectionError("iPhone found, but the Tethercam app isn't open on the phone.")
-    return sock  # from here on, the socket is a raw pipe to the app
-
-
-def recv_exact(sock, n):
-    buf = bytearray(n)
-    view = memoryview(buf)
-    got = 0
-    while got < n:
-        k = sock.recv_into(view[got:], n - got)
-        if k == 0:
-            raise ConnectionError("The iPhone closed the connection")
-        got += k
-    return bytes(buf)
-
-
-def read_frame(sock):
-    (length,) = struct.unpack(">I", recv_exact(sock, 4))
-    if length == 0 or length > MAX_FRAME_BYTES:
-        raise ConnectionError(f"Bad frame size {length}; is the Tethercam app running?")
-    data = np.frombuffer(recv_exact(sock, length), dtype=np.uint8)
-    frame = cv2.imdecode(data, cv2.IMREAD_COLOR)
-    if frame is None:
-        raise ConnectionError("Could not decode a frame from the iPhone")
-    return frame
-
+import android_source as android
+import iphone_source as iphone
 
 ROTATIONS = {
     0: None,
@@ -116,7 +39,7 @@ def fit(frame, width, height):
     resized = cv2.resize(frame, (nw, nh), interpolation=cv2.INTER_AREA)
     canvas = np.zeros((height, width, 3), dtype=np.uint8)
     x, y = (width - nw) // 2, (height - nh) // 2
-    canvas[y : y + nh, x : x + nw] = resized
+    canvas[y: y + nh, x: x + nw] = resized
     return canvas
 
 
@@ -129,41 +52,71 @@ def waiting_frame(width, height, message):
     return frame
 
 
+def pick_phone(choice):
+    """Decide which phone to use. 'auto' picks whichever is plugged in."""
+    if choice != "auto":
+        return choice
+    if iphone.list_iphones():
+        return "iphone"
+    if any(state in ("device", "unauthorized") for _, state in android.list_androids()):
+        return "android"
+    raise ConnectionError("No phone found. Plug in your phone. "
+                          "iPhone: unlock it and tap Trust. Android: turn on USB debugging.")
+
+
+def open_frames(args):
+    phone = pick_phone(args.phone)
+    if phone == "iphone":
+        return phone, iphone.frames(args.device)
+    return phone, android.frames(args.device, facing=args.camera,
+                                 max_size=max(args.width, args.height), max_fps=args.fps)
+
+
+def camera_help():
+    if sys.platform == "win32":
+        return ("Install OBS Studio (it provides the 'OBS Virtual Camera' driver). "
+                "If OBS is open, close it.")
+    return ("Load the virtual camera module, then run tethercam again:\n"
+            "  sudo modprobe v4l2loopback exclusive_caps=1 card_label=tethercam")
+
+
 def main():
     p = argparse.ArgumentParser(prog="tethercam",
-                                description="Use an iPhone over USB as a Windows webcam.")
+                                description="Use your phone over USB as a webcam.")
+    p.add_argument("--phone", choices=["auto", "iphone", "android"], default="auto",
+                   help="Which phone to use (default: whichever is plugged in)")
+    p.add_argument("--camera", choices=["back", "front"], default="back",
+                   help="Android only. On iPhone, switch cameras in the app.")
     p.add_argument("--width", type=int, default=1280)
     p.add_argument("--height", type=int, default=720)
     p.add_argument("--fps", type=int, default=30)
     p.add_argument("--rotate", type=int, choices=sorted(ROTATIONS), default=0,
-                   help="Rotate the image clockwise by this many degrees")
-    p.add_argument("--mirror", action="store_true", help="Flip the image left-to-right")
-    p.add_argument("--udid", help="Pick a specific iPhone if more than one is plugged in")
+                   help="Rotate the picture clockwise by this many degrees")
+    p.add_argument("--mirror", action="store_true", help="Flip the picture left to right")
+    p.add_argument("--device", help="Pick one phone (iPhone UDID or Android serial)")
     p.add_argument("--preview", action="store_true", help="Also show a preview window")
     args = p.parse_args()
 
-    import pyvirtualcam  # imported here so the protocol code can be tested without it
+    import pyvirtualcam  # imported here so the rest can be tested without it
 
     try:
         cam = pyvirtualcam.Camera(args.width, args.height, args.fps,
                                   fmt=pyvirtualcam.PixelFormat.BGR)
-    except RuntimeError as e:
-        sys.exit(f"Could not start the virtual webcam: {e}\n"
-                 "Install OBS Studio (it provides the 'OBS Virtual Camera' driver), "
-                 "then run this again.")
+    except Exception as e:  # pyvirtualcam raises RuntimeError on both platforms
+        sys.exit(f"Could not start the virtual webcam: {e}\n{camera_help()}")
 
     print(f"Virtual webcam ready: '{cam.device}' at {args.width}x{args.height}.")
-    print("In Discord: Settings > Voice & Video > Camera > pick that camera. Ctrl+C to stop.")
+    print(f"In Discord: Settings > Voice & Video > Camera > {cam.device}. Ctrl+C to stop.")
 
     with cam:
         while True:
+            stream = None
             try:
-                sock = connect_usb(args.udid, PHONE_PORT)
-                sock.settimeout(5)
-                print("Connected to iPhone. Streaming...")
+                phone, stream = open_frames(args)
+                label = "iPhone" if phone == "iphone" else "Android phone"
+                print(f"Connected to {label}. Streaming...")
                 frames, t0 = 0, time.time()
-                while True:
-                    frame = read_frame(sock)
+                for frame in stream:
                     if ROTATIONS[args.rotate] is not None:
                         frame = cv2.rotate(frame, ROTATIONS[args.rotate])
                     if args.mirror:
@@ -179,24 +132,24 @@ def main():
                     if time.time() - t0 >= 5:
                         print(f"  {frames / (time.time() - t0):.1f} fps", end="\r")
                         frames, t0 = 0, time.time()
+                raise ConnectionError("The video stopped")
             except KeyboardInterrupt:
                 print("\nStopped.")
                 return
             except Exception as e:  # keep the webcam alive and retry
                 msg = str(e) or e.__class__.__name__
                 if isinstance(e, socket.timeout):
-                    msg = "No video. Open the Tethercam app and keep it on screen."
-                print(f"Waiting for iPhone: {msg}")
-                try:
-                    sock.close()
-                except Exception:
-                    pass
-                cam.send(waiting_frame(args.width, args.height, msg))
+                    msg = "No video. Keep the phone unlocked (iPhone: keep the Tethercam app open)."
+                print(f"Waiting for phone: {msg}")
+                cam.send(waiting_frame(args.width, args.height, msg.splitlines()[0]))
                 try:
                     time.sleep(1.5)
                 except KeyboardInterrupt:
                     print("\nStopped.")
                     return
+            finally:
+                if stream is not None:
+                    stream.close()
 
 
 if __name__ == "__main__":

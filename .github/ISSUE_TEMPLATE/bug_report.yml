@@ -19,23 +19,16 @@ body:
       description: Copy the text from the tethercam window on your PC.
       render: text
   - type: input
-    id: ios
+    id: phone
     attributes:
-      label: iPhone model and iOS version
-      placeholder: iPhone 13, iOS 18.1
+      label: Phone model and version
+      placeholder: iPhone 13, iOS 18.1  /  Pixel 7, Android 15
     validations:
       required: true
   - type: input
-    id: windows
+    id: pc
     attributes:
-      label: Windows version
-      placeholder: Windows 11 24H2
-  - type: dropdown
-    id: itunes
-    attributes:
-      label: Apple USB drivers
-      options:
-        - iTunes from apple.com
-        - iTunes from the Microsoft Store
-        - Apple Devices app
-        - I do not know
+      label: PC system
+      placeholder: Windows 11 24H2  /  Ubuntu 24.04
+    validations:
+      required: true

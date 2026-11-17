@@ -2,64 +2,89 @@
 
 # tethercam
 
-**Use your iPhone as a webcam on Windows, with one USB cable.**
+**Use your phone as a webcam on your PC, with one USB cable.**
+
+iPhone or Android · Windows or Linux
 
 [![CI](https://github.com/kirawins17/tethercam/actions/workflows/ci.yml/badge.svg)](https://github.com/kirawins17/tethercam/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/kirawins17/tethercam)](https://github.com/kirawins17/tethercam/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-<img src="docs/demo.gif" alt="An iPhone connects to a PC with a USB cable. The PC shows the iPhone camera in a video call." width="720">
+<img src="docs/demo.gif" alt="A phone connects to a PC with a USB cable. The PC shows the phone camera in a video call." width="720">
 
-Works with Discord, Zoom, Teams, OBS and Google Meet. No Wi-Fi. No account. No Mac. Free.
+Works with Discord, Zoom, Teams, OBS and Google Meet. No Wi-Fi. No account. Free.
 
 </div>
 
-## Setup (about 10 minutes, one time)
+## Setup (one time)
 
-### 1. Run the installer on your PC
+### 1. Install on your PC
 
-**[⬇ Download Install-Tethercam.bat](https://github.com/kirawins17/tethercam/releases/latest/download/Install-Tethercam.bat)**, then double-click it.
+**Windows:** **[⬇ Download Install-Tethercam.bat](https://github.com/kirawins17/tethercam/releases/latest/download/Install-Tethercam.bat)**, then double-click it.
 
-The installer shows you this list and asks before it starts. It skips what you already have.
+**Linux:** open a terminal and run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/kirawins17/tethercam/main/install.sh | bash
+```
+
+The installer asks which phone you have. Then it shows what it will install and asks before it starts. It skips what you already have.
 
 | It installs | Why you need it |
 |---|---|
 | Python | Runs the Tethercam program. |
-| OBS Studio | Adds the "OBS Virtual Camera" that Discord and Zoom can see. You never need to open OBS. |
-| iTunes | Lets your PC talk to your iPhone over the cable. |
-| Sideloadly | Puts the Tethercam app on your iPhone. |
-| Tethercam | The program, the iPhone app file, and a **Tethercam** shortcut on your desktop. |
+| Virtual webcam | OBS Studio on Windows, v4l2loopback on Linux. This is the camera that Discord sees. You never need to open OBS. |
+| **iPhone only:** iTunes (Windows) or usbmuxd (Linux) | Lets your PC talk to an iPhone over the cable. |
+| **iPhone only:** Sideloadly (Windows) | Puts the Tethercam app on your iPhone. |
+| **Android only:** adb | Lets your PC talk to an Android phone over the cable. |
+| Tethercam | The program and a **Tethercam** shortcut. |
 
-> If Windows shows "Windows protected your PC", click **More info › Run anyway**. The file is 4 lines; you can [read it here](Install-Tethercam.bat).
+> On Windows, if you see "Windows protected your PC", click **More info › Run anyway**. The file is 4 lines; you can [read it here](Install-Tethercam.bat).
 
-### 2. Put the app on your iPhone
+### 2. Set up your phone
 
-At the end, the installer opens Sideloadly and the folder with `Tethercam.ipa`.
+<table>
+<tr><th>iPhone</th><th>Android (12 or newer)</th></tr>
+<tr><td valign="top">
 
-1. Plug your iPhone into the PC. Unlock it. Tap **Trust**.
+The installer opens Sideloadly and the folder with `Tethercam.ipa`.
+
+1. Plug in the iPhone. Unlock it. Tap **Trust**.
 2. Drag `Tethercam.ipa` into Sideloadly. Type your Apple ID. Click **Start**.
-3. On the iPhone: **Settings › General › VPN & Device Management** › your Apple ID › **Trust**.
-4. On the iPhone: **Settings › Privacy & Security › Developer Mode** › **On**. The iPhone restarts.
+3. **Settings › General › VPN & Device Management** › your Apple ID › **Trust**.
+4. **Settings › Privacy & Security › Developer Mode** › **On**. The iPhone restarts.
 
-> A free Apple ID makes the app stop after 7 days. To renew it, do step 2 again.
+A free Apple ID makes the app stop after 7 days. To renew it, do step 2 again.
+
+</td><td valign="top">
+
+No app needed.
+
+1. **Settings › About phone**. Tap **Build number** 7 times.
+2. **Settings › System › Developer options › USB debugging** › **On**.
+3. Plug the phone into the PC. Tap **Allow**.
+
+</td></tr>
+</table>
 
 ### 3. Use it
 
-1. Plug in the iPhone. Open the **Tethercam** app. Keep it on the screen.
-2. Double-click **Tethercam** on your PC desktop.
-3. In Discord: **Settings › Voice & Video › Camera › OBS Virtual Camera**.
+1. Plug in the phone. **iPhone:** open the Tethercam app and keep it on the screen. **Android:** unlock the phone.
+2. Open **Tethercam** on your PC (desktop shortcut on Windows, app menu on Linux).
+3. In Discord, go to **Settings › Voice & Video › Camera**. Pick **OBS Virtual Camera** (Windows) or **tethercam** (Linux).
 
-Put the iPhone on its side for the best picture.
+Put the phone on its side for the best picture.
 
 ## Problems?
 
 | You see | Do this |
 |---|---|
-| `No iPhone found over USB` | Unlock the iPhone. Tap **Trust**. Try another cable or USB port. |
+| `No phone found` | Unlock the phone. iPhone: tap **Trust**. Android: turn on USB debugging and tap **Allow**. Try another cable or USB port. |
 | `Can't reach Apple's USB service` | Install iTunes from [apple.com](https://www.apple.com/itunes/), not the Microsoft Store. Restart the PC. |
 | `the Tethercam app isn't open` | Open the app on the iPhone. Keep it on the screen. |
-| `Could not start the virtual webcam` | Close OBS if it is open. If it is not installed, run the installer again. |
-| The picture is sideways | Put the iPhone on its side, or see the options below. |
+| `The camera needs Android 12 or newer` | Android camera streaming needs Android 12+. |
+| `Could not start the virtual webcam` | Windows: close OBS if it is open. Linux: run `sudo modprobe v4l2loopback exclusive_caps=1 card_label=tethercam`. |
+| The picture is sideways | Put the phone on its side, or use `--rotate 90`. |
 | Discord does not show the camera | Close Discord fully, then open it again. |
 
 Still stuck? [Ask in Discussions](https://github.com/kirawins17/tethercam/discussions).
@@ -67,46 +92,42 @@ Still stuck? [Ask in Discussions](https://github.com/kirawins17/tethercam/discus
 <details>
 <summary><b>Options</b></summary>
 
-Edit the desktop shortcut and add these to the end, or run `python tethercam.py` with them:
+Add these after the command (`start-tethercam.bat` or `start-tethercam.sh`), or edit the shortcut:
 
 | Option | What it does |
 |---|---|
+| `--phone iphone` / `--phone android` | Use this phone type. The default finds the phone that is plugged in. |
+| `--camera front` | Android: use the front camera. iPhone: switch in the app. |
 | `--rotate 90` | Turns the picture. Use 0, 90, 180 or 270. |
 | `--mirror` | Flips the picture left to right. |
 | `--width 1920 --height 1080` | Changes the size. The default is 1280 × 720. |
 | `--preview` | Shows the picture in a window on the PC. |
-| `--udid <id>` | Selects one iPhone when more than one is connected. |
+| `--device <id>` | Selects one phone when more than one is connected. |
 
 </details>
 
 <details>
-<summary><b>Install without the .bat file</b></summary>
+<summary><b>Install by hand</b></summary>
 
-Open PowerShell and run:
-
-```powershell
-irm https://raw.githubusercontent.com/kirawins17/tethercam/main/install.ps1 | iex
-```
-
-Or install by hand: Python, [OBS Studio](https://obsproject.com/), [iTunes](https://www.apple.com/itunes/) and [Sideloadly](https://sideloadly.io/). Then download this repo, run `pc/start-tethercam.bat`, and get `Tethercam.ipa` from [Releases](https://github.com/kirawins17/tethercam/releases/latest).
+1. Install Python 3.9+ and a virtual webcam: [OBS Studio](https://obsproject.com/) on Windows, `v4l2loopback` on Linux.
+2. iPhone: install [iTunes](https://www.apple.com/itunes/) (Windows) or `usbmuxd` (Linux), and install `Tethercam.ipa` from [Releases](https://github.com/kirawins17/tethercam/releases/latest) with [Sideloadly](https://sideloadly.io/) or [Sideloader](https://github.com/Dadoum/Sideloader).
+3. Android: install [adb](https://developer.android.com/tools/releases/platform-tools).
+4. Download this repo. Run `pc/start-tethercam.bat` (Windows) or `pc/start-tethercam.sh` (Linux).
 
 </details>
 
 <details>
 <summary><b>How it works</b></summary>
 
-The design comes from [scrcpy](https://github.com/Genymobile/scrcpy), which does the same thing for Android phones.
-
 ```
-iPhone camera ─► Tethercam app ─► USB cable (Apple usbmux) ─► tethercam.py ─► OBS Virtual Camera ─► Discord
+iPhone:  Tethercam app ─► Apple usbmux (USB) ─► JPEG frames ──┐
+                                                              ├─► tethercam ─► virtual webcam ─► Discord
+Android: scrcpy server ─► adb (USB) ─────────► H.264 video ──┘
 ```
 
-| | scrcpy (Android) | tethercam (iPhone) |
-|---|---|---|
-| Cable connection | `adb forward` | Apple usbmux (comes with iTunes) |
-| Phone side | scrcpy-server | Tethercam app ([`ios/`](ios/)) |
-| Video | H.264 | JPEG frames: 4-byte length, then the image |
-| PC webcam | V4L2 (Linux only) | OBS Virtual Camera via [pyvirtualcam](https://github.com/letmaik/pyvirtualcam) |
+- **iPhone:** our own small app ([`ios/`](ios/)) sends JPEG frames through Apple's USB service.
+- **Android:** we use the server from [scrcpy](https://github.com/Genymobile/scrcpy). Tethercam downloads the official file once and checks it against a fixed SHA-256. It runs only while you stream, and it removes itself when it stops. Nothing is installed on the phone.
+- **PC:** [pyvirtualcam](https://github.com/letmaik/pyvirtualcam) sends the picture to OBS Virtual Camera (Windows) or v4l2loopback (Linux).
 
 </details>
 
@@ -117,10 +138,20 @@ iPhone camera ─► Tethercam app ─► USB cable (Apple usbmux) ─► tether
 - No accounts, no analytics, no tracking.
 - Found a security problem? See [SECURITY.md](SECURITY.md).
 
+## Credits
+
+Tethercam stands on the work of other people. Thank you:
+
+- **[scrcpy](https://github.com/Genymobile/scrcpy)** by Genymobile and Romain Vimont: the design idea, and the server that streams the Android camera.
+- **[Scrcpy-Camera](https://github.com/xeniumcode/Scrcpy-Camera)** by xeniumcode and **[scrcpy-camera](https://github.com/NanKillBro/scrcpy-camera)** by NanKillBro: they showed how to use a phone camera as a webcam with scrcpy.
+- **[pyvirtualcam](https://github.com/letmaik/pyvirtualcam)**, **[PyAV](https://github.com/PyAV-Org/PyAV)**, **[OpenCV](https://github.com/opencv/opencv-python)**, **[OBS Studio](https://github.com/obsproject/obs-studio)**, **[v4l2loopback](https://github.com/umlaeute/v4l2loopback)**, **[libimobiledevice / usbmuxd](https://github.com/libimobiledevice)** and **[XcodeGen](https://github.com/yonaskolb/XcodeGen)**.
+
+The full list, with licenses, is in [CREDITS.md](CREDITS.md).
+
 ## Contribute
 
 Help is welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md). [`good first issue`](https://github.com/kirawins17/tethercam/labels/good%20first%20issue) issues are a good start.
 
 ## License
 
-[MIT](LICENSE). Thanks to [scrcpy](https://github.com/Genymobile/scrcpy), [Scrcpy-Camera](https://github.com/xeniumcode/Scrcpy-Camera) and [scrcpy-camera](https://github.com/NanKillBro/scrcpy-camera) for the ideas.
+[MIT](LICENSE).
