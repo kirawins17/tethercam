@@ -11,13 +11,23 @@ iPhone or Android · Windows or Linux
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kirawins17/tethercam/badge)](https://scorecard.dev/viewer/?uri=github.com/kirawins17/tethercam)
 
-<img src="docs/demo.gif" alt="A phone connects to a PC with a USB cable. The PC shows the phone camera in a video call." width="720">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/hero-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/hero-light.png">
+  <img alt="A phone on a stand is connected by a glowing USB cable to a laptop. The laptop shows a video call with a LIVE label." src="docs/hero-light.png" width="800">
+</picture>
 
 Works with Discord, Zoom, Teams, OBS and Google Meet. No Wi-Fi. No account. Free.
 
 </div>
 
 ## Setup (one time)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/setup-steps-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/setup-steps-light.png">
+  <img alt="Three steps: 1, run the installer. 2, set up your phone. 3, you are on camera." src="docs/setup-steps-light.png">
+</picture>
 
 ### 1. Install on your PC
 
@@ -44,8 +54,14 @@ The installer shows what it will install and asks before it starts. It skips wha
 
 ### 2. Set up your phone
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/iphone-vs-android-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/iphone-vs-android-light.png">
+  <img alt="iPhone: small free app, install once with Sideloadly, open the app to stream, iOS 15 or newer. Android: no app needed, turn on USB debugging once, unlock the phone to stream, Android 12 or newer. Both connect to the PC with one USB cable." src="docs/iphone-vs-android-light.png">
+</picture>
+
 <table>
-<tr><th>iPhone</th><th>Android (12 or newer)</th></tr>
+<tr><th>iPhone (iOS 15 or newer)</th><th>Android (12 or newer)</th></tr>
 <tr><td valign="top">
 
 The installer opens Sideloadly and the folder with `Tethercam.ipa`.
@@ -75,6 +91,16 @@ No app needed.
 3. In Discord, go to **Settings › Voice & Video › Camera**. Pick **OBS Virtual Camera** (Windows) or **tethercam** (Linux).
 
 Put the phone on its side for the best picture.
+
+## How it works
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/how-it-works-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/how-it-works-light.png">
+  <img alt="iPhone path and Android path. The phone camera sends pictures down the USB cable to Tethercam on the PC. Tethercam sends them to a virtual webcam. Discord, Zoom and Teams see it as a camera. The video stays on the cable." src="docs/how-it-works-light.png">
+</picture>
+
+The picture goes one way: phone camera, USB cable, Tethercam on your PC, a virtual webcam, then your video app. It never goes to the internet. The technical details are under **Technical details** below.
 
 ## Problems?
 
@@ -136,7 +162,7 @@ sudo rm -f /etc/modules-load.d/tethercam.conf /etc/modprobe.d/tethercam.conf
 </details>
 
 <details>
-<summary><b>How it works</b></summary>
+<summary><b>Technical details</b></summary>
 
 ```
 iPhone:  Tethercam app ─► Apple usbmux (USB) ─► JPEG frames ──┐

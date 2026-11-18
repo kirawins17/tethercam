@@ -4,6 +4,14 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Added
+- New images in the README: hero, setup steps, iPhone vs Android, and how it works. Each has a dark and a light version that follows your GitHub theme.
+- New social preview card.
+- The README says the iPhone app needs iOS 15 or newer.
+
+### Removed
+- The old animated demo GIF.
+
 ## [1.3.0] - 2026-11-18
 
 ### Fixed
