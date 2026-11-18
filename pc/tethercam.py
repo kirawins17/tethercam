@@ -21,7 +21,7 @@ import numpy as np
 import android_source as android
 import iphone_source as iphone
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 ROTATIONS = {
     0: None,

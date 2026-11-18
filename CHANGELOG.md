@@ -4,6 +4,10 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-18
+
+The first release since the repository became public. Its files have signed build provenance.
+
 ### Added
 - New images in the README: hero, setup steps, iPhone vs Android, and how it works. Each has a dark and a light version that follows your GitHub theme.
 - New social preview card.
@@ -82,7 +86,8 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 ### Security
 - The iPhone app accepts connections only from the USB cable, not from Wi-Fi.
 
-[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/kirawins17/tethercam/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kirawins17/tethercam/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kirawins17/tethercam/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kirawins17/tethercam/compare/v1.0.0...v1.1.0
