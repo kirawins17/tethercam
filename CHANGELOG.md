@@ -9,6 +9,11 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 - New social preview card.
 - The README says the iPhone app needs iOS 15 or newer.
 
+### Changed
+- GitHub Actions updated to the latest versions (checkout v7, setup-python v7, upload-artifact v7, download-artifact v8, action-gh-release v3). They passed a full release dry run.
+- OpenCV 5 is now allowed (`opencv-python>=4.8,<6`).
+- Dependabot only proposes Python updates when a new version is outside the allowed range.
+
 ### Removed
 - The old animated demo GIF.
 

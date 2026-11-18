@@ -11,3 +11,6 @@ updates:
     directory: /pc
     schedule:
       interval: monthly
+    # Only open a pull request when a new version is outside the allowed range.
+    # Raising the minimum versions would break people on older Python versions.
+    versioning-strategy: increase-if-necessary
