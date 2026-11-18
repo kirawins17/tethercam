@@ -45,6 +45,18 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\install.ps1", [ref]$null, [ref]$errors) | Out-Null
           if ($errors) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
           Write-Host "install.ps1 OK"
+      - name: The Python search finds Python on a real Windows PC
+        shell: powershell
+        run: |
+          # Load only the helper functions from install.ps1 (the rest of it is interactive).
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("$PWD\install.ps1", [ref]$null, [ref]$null)
+          $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $false) |
+            Where-Object { $_.Name -in 'Test-PythonExe', 'Find-Python' } |
+            ForEach-Object { Invoke-Expression $_.Extent.Text }
+          $py = Find-Python
+          if (-not $py) { Write-Error 'Find-Python returned nothing'; exit 1 }
+          Write-Host "Find-Python found: $py"
+          & $py --version
       - name: No download-and-run patterns (antivirus flags them as malware)
         shell: powershell
         run: |
