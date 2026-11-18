@@ -45,6 +45,12 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile("$PWD\install.ps1", [ref]$null, [ref]$errors) | Out-Null
           if ($errors) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
           Write-Host "install.ps1 OK"
+      - name: No download-and-run patterns (antivirus flags them as malware)
+        shell: powershell
+        run: |
+          $bad = Select-String -Path install.ps1, Install-Tethercam.bat -Pattern '\biex\b', 'Invoke-Expression', 'DownloadString', '-Command\s+"?irm', '\.exe''\s*-OutFile' -SimpleMatch:$false
+          if ($bad) { $bad | ForEach-Object { Write-Error "$($_.Filename):$($_.LineNumber): $($_.Line)" }; exit 1 }
+          Write-Host "No download-and-run patterns found"
 
   installer-linux:
     name: Linux scripts pass ShellCheck

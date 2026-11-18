@@ -31,7 +31,7 @@ Works with Discord, Zoom, Teams, OBS and Google Meet. No Wi-Fi. No account. Free
 
 ### 1. Install on your PC
 
-**Windows:** **[⬇ Download Install-Tethercam.bat](https://github.com/kirawins17/tethercam/releases/latest/download/Install-Tethercam.bat)**, then double-click it.
+**Windows:** **[⬇ Download Tethercam-Setup-Windows.zip](https://github.com/kirawins17/tethercam/releases/latest/download/Tethercam-Setup-Windows.zip)**. Right-click it › **Extract All**. Then double-click **Install-Tethercam.bat** in the folder.
 
 **Linux:** open a terminal and run:
 
@@ -46,11 +46,11 @@ The installer shows what it will install and asks before it starts. It skips wha
 | Python | Runs the Tethercam program. |
 | Virtual webcam | OBS Studio on Windows, v4l2loopback on Linux. This is the camera that Discord sees. You never need to open OBS. |
 | **iPhone only:** iTunes (Windows) or usbmuxd (Linux) | Lets your PC talk to an iPhone over the cable. |
-| **iPhone only:** Sideloadly (Windows) | Puts the Tethercam app on your iPhone. |
+| **iPhone only:** Sideloadly (Windows; the installer opens its website for you) | Puts the Tethercam app on your iPhone. |
 | **Android only:** adb | Lets your PC talk to an Android phone over the cable. |
 | Tethercam | The program and a **Tethercam** shortcut. |
 
-> On Windows, if you see "Windows protected your PC", click **More info › Run anyway**. The file is only a few lines; you can [read it here](Install-Tethercam.bat).
+> On Windows, if you see "Windows protected your PC", click **More info › Run anyway**. The zip holds two short text files that you can open and read first: [Install-Tethercam.bat](Install-Tethercam.bat) and [install.ps1](install.ps1). The installer never downloads and runs code from the internet. For other programs it uses `winget` or opens the official website.
 
 ### 2. Set up your phone
 

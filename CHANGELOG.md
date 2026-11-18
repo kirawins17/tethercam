@@ -4,7 +4,14 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-18
+
+### Fixed
+- Windows Defender blocked the Windows installer as a "Trojan". It was a false alarm: the installer downloaded a script and ran it straight away (`irm ... | iex`), a pattern that malware also uses. The Windows download is now one zip, `Tethercam-Setup-Windows.zip`, with the installer script inside it. Nothing is downloaded and run on the fly.
+- The installer no longer downloads and runs the Sideloadly installer. It opens sideloadly.io instead.
+
 ### Added
+- A CI check that fails if a download-and-run pattern comes back into the Windows installer.
 - Every new issue gets a welcome reply within a minute, with the most common fixes and what to include.
 
 ## [1.4.0] - 2026-11-18
@@ -89,7 +96,8 @@ The first release since the repository became public. Its files have signed buil
 ### Security
 - The iPhone app accepts connections only from the USB cable, not from Wi-Fi.
 
-[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/kirawins17/tethercam/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/kirawins17/tethercam/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kirawins17/tethercam/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kirawins17/tethercam/compare/v1.1.0...v1.2.0

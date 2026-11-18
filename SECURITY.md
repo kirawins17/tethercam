@@ -16,9 +16,10 @@ We reply in 3 days or less.
   The server runs only while you stream and removes itself when it stops. The adb tunnel listens only on `127.0.0.1`.
 - Tethercam sends no data to the internet. It has no accounts, analytics or tracking.
 - The only download while you use it: for Android, the scrcpy server from its official GitHub release, one time.
+- The Windows setup zip holds the installer script itself. It never downloads a script and runs it. CI blocks that pattern, because antivirus programs flag it as malware.
 - The installer attached to a release is pinned to that release. It installs exactly the files listed in that release's `SHA256SUMS.txt`.
-- The Windows installer checks the Windows signature of the Sideloadly installer before it runs it, and asks you first if the signature cannot be checked.
-- The installer downloads only from `github.com/kirawins17/tethercam` and from the official sites of the tools it installs (on Windows: Python, OBS Studio, iTunes and adb with `winget`, Sideloadly from sideloadly.io; on Linux: your distribution's package manager). It shows the list and asks before it installs anything.
+- The Windows installer does not download Sideloadly itself. It opens sideloadly.io so you get it from its makers.
+- The installer downloads only from `github.com/kirawins17/tethercam` and from the official sites of the tools it installs (on Windows: Python, OBS Studio, iTunes and adb with `winget`; on Linux: your distribution's package manager). It shows the list and asks before it installs anything.
 
 ## Check a download
 

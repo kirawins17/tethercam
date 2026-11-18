@@ -1,8 +1,7 @@
 # Tethercam installer for Windows.
 #
-# Easiest way: download "Install-Tethercam.bat" from the Releases page and double-click it.
-# Or run this in PowerShell:
-#   irm https://raw.githubusercontent.com/kirawins17/tethercam/main/install.ps1 | iex
+# How to run it: download "Tethercam-Setup-Windows.zip" from the Releases page, unzip it,
+# and double-click "Install-Tethercam.bat" (it runs this file, which sits next to it).
 #
 # It asks which phone you have, shows what it will install, and asks before it starts.
 
@@ -137,30 +136,12 @@ if ($wantIphone) {
     Step 'Sideloadly (installs the app on your iPhone)'
     if (Find-Sideloadly) { Say '    Already installed.' 'Green' }
     else {
-        $setup = Join-Path $env:TEMP 'SideloadlySetup64.exe'
-        try {
-            Invoke-WebRequest -UseBasicParsing 'https://sideloadly.io/SideloadlySetup64.exe' -OutFile $setup
-            $sig = Get-AuthenticodeSignature $setup
-            $run = $true
-            if ($sig.Status -eq 'Valid') {
-                Say "    Signature OK: $($sig.SignerCertificate.Subject)" 'Green'
-            } else {
-                Say "    Warning: the Sideloadly installer is not signed in a way Windows can check ($($sig.Status))." 'Yellow'
-                Say '    It was downloaded from https://sideloadly.io/ over HTTPS.' 'Yellow'
-                $run = (Read-Host '    Run it anyway? Type Y to run, or press Enter to skip') -match '^[Yy]'
-            }
-            if ($run) {
-                Say '    Opening the Sideloadly installer. Click through it, then come back here.'
-                Start-Process $setup -Wait
-            } else {
-                Say '    Skipped. You can install Sideloadly later from https://sideloadly.io/' 'Yellow'
-            }
-            Remove-Item $setup -ErrorAction SilentlyContinue
-        } catch {
-            Say '    Could not download Sideloadly. Opening its website...' 'Yellow'
-            Start-Process 'https://sideloadly.io/'
-            Read-Host '    Install Sideloadly, then press Enter to continue'
-        }
+        # Tethercam does not download or run other programs' installers itself.
+        # It opens the official website, so you download Sideloadly from its makers.
+        Say '    Opening https://sideloadly.io/ in your browser.'
+        Say '    Download Sideloadly for Windows there and install it.'
+        Start-Process 'https://sideloadly.io/'
+        Read-Host '    When Sideloadly is installed (or to skip for now), press Enter to continue'
     }
 }
 

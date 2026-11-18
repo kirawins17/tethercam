@@ -88,12 +88,15 @@ jobs:
           grep -q "__version__ = \"$version\"" pc/tethercam.py || { echo "::error::pc/tethercam.py __version__ is not $version"; exit 1; }
           # Pin the attached installers to this release, so they install exactly these files.
           sed -i "s#^set \"TETHERCAM_TAG=.*#set \"TETHERCAM_TAG=$TAG\"\r#" Install-Tethercam.bat
-          sed -i "s#^set \"TETHERCAM_PS1=.*#set \"TETHERCAM_PS1=https://github.com/${{ github.repository }}/releases/download/$TAG/install.ps1\"\r#" Install-Tethercam.bat
           sed -i "s#^PINNED_TAG=\"\"#PINNED_TAG=\"$TAG\"#" install.sh
           grep -q "TETHERCAM_TAG=$TAG" Install-Tethercam.bat && grep -q "PINNED_TAG=\"$TAG\"" install.sh \
             || { echo "::error::Could not pin the installers to $TAG"; exit 1; }
           cat Install-Tethercam.bat
-          sha256sum Tethercam.ipa Install-Tethercam.bat install.ps1 install.sh > SHA256SUMS.txt
+          # Windows download: one zip with the .bat and the script it runs, side by side.
+          mkdir -p Tethercam-Setup-Windows
+          cp Install-Tethercam.bat install.ps1 Tethercam-Setup-Windows/
+          zip -qr Tethercam-Setup-Windows.zip Tethercam-Setup-Windows
+          sha256sum Tethercam.ipa Tethercam-Setup-Windows.zip install.ps1 install.sh > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Sign build provenance (public repos only)
@@ -102,7 +105,7 @@ jobs:
         with:
           subject-path: |
             Tethercam.ipa
-            Install-Tethercam.bat
+            Tethercam-Setup-Windows.zip
             install.ps1
             install.sh
 
@@ -119,7 +122,7 @@ jobs:
           body_path: notes.md
           files: |
             Tethercam.ipa
-            Install-Tethercam.bat
+            Tethercam-Setup-Windows.zip
             install.ps1
             install.sh
             SHA256SUMS.txt
