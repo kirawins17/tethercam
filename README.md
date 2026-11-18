@@ -101,7 +101,7 @@ Add these after the command (`start-tethercam.bat` or `start-tethercam.sh`), or 
 | `--camera front` | Android: use the front camera. iPhone: switch in the app. |
 | `--rotate 90` | Turns the picture. Use 0, 90, 180 or 270. |
 | `--mirror` | Flips the picture left to right. |
-| `--width 1920 --height 1080` | Changes the size. The default is 1280 × 720. |
+| `--width 1920 --height 1080` | Changes the webcam size. The default is 1280 × 720. Android sends up to this size. The iPhone app always sends 1280 × 720, so a bigger size only scales it up. |
 | `--fps 60` | Changes the frame rate. The default is 30. |
 | `--preview` | Shows the picture in a window on the PC. |
 | `--device <id>` | Selects one phone when more than one is connected. |

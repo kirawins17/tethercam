@@ -21,7 +21,7 @@ import numpy as np
 import android_source as android
 import iphone_source as iphone
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 ROTATIONS = {
     0: None,
@@ -112,49 +112,49 @@ def main():
     print(f"tethercam {__version__}. Virtual webcam ready: '{cam.device}' at {args.width}x{args.height}.")
     print(f"In Discord: Settings > Voice & Video > Camera > {name}. Ctrl+C to stop.")
 
-    with cam:
-        while True:
-            stream = None
-            try:
-                phone, stream = open_frames(args)
-                label = "iPhone" if phone == "iphone" else "Android phone"
-                print(f"Connected to {label}. Streaming...")
-                frames, t0 = 0, time.time()
-                for frame in stream:
-                    if ROTATIONS[args.rotate] is not None:
-                        frame = cv2.rotate(frame, ROTATIONS[args.rotate])
-                    if args.mirror:
-                        frame = cv2.flip(frame, 1)
-                    frame = fit(frame, args.width, args.height)
-                    cam.send(frame)
-                    if args.preview:
-                        cv2.imshow("tethercam preview (q to close)", frame)
-                        if cv2.waitKey(1) & 0xFF == ord("q"):
-                            args.preview = False
-                            cv2.destroyAllWindows()
-                    frames += 1
-                    if time.time() - t0 >= 5:
-                        print(f"  {frames / (time.time() - t0):.1f} fps", end="\r")
-                        frames, t0 = 0, time.time()
-                raise ConnectionError("The video stopped")
-            except KeyboardInterrupt:
-                print("\nStopped.")
-                return
-            except Exception as e:  # keep the webcam alive and retry
-                msg = str(e) or e.__class__.__name__
-                if isinstance(e, socket.timeout):
-                    msg = "No video. Keep the phone unlocked (iPhone: keep the Tethercam app open)."
-                print(f"Waiting for phone: {msg}")
-                cam.send(waiting_frame(args.width, args.height, msg.splitlines()[0]))
-                try:
-                    time.sleep(1.5)
-                except KeyboardInterrupt:
-                    print("\nStopped.")
-                    return
-            finally:
-                if stream is not None:
-                    stream.close()
+    try:
+        with cam:
+            run_loop(cam, args)
+    except KeyboardInterrupt:
+        print("\nStopped.")
 
+
+def run_loop(cam, args):
+    """Stream frames forever. Reconnect when the phone drops. Ctrl+C stops it."""
+    while True:
+        stream = None
+        try:
+            phone, stream = open_frames(args)
+            label = "iPhone" if phone == "iphone" else "Android phone"
+            print(f"Connected to {label}. Streaming...")
+            frames, t0 = 0, time.time()
+            for frame in stream:
+                if ROTATIONS[args.rotate] is not None:
+                    frame = cv2.rotate(frame, ROTATIONS[args.rotate])
+                if args.mirror:
+                    frame = cv2.flip(frame, 1)
+                frame = fit(frame, args.width, args.height)
+                cam.send(frame)
+                if args.preview:
+                    cv2.imshow("tethercam preview (q to close)", frame)
+                    if cv2.waitKey(1) & 0xFF == ord("q"):
+                        args.preview = False
+                        cv2.destroyAllWindows()
+                frames += 1
+                if time.time() - t0 >= 5:
+                    print(f"  {frames / (time.time() - t0):.1f} fps", end="\r")
+                    frames, t0 = 0, time.time()
+            raise ConnectionError("The video stopped")
+        except Exception as e:  # keep the webcam alive and retry (Ctrl+C is not an Exception)
+            msg = str(e) or e.__class__.__name__
+            if isinstance(e, socket.timeout):
+                msg = "No video. Keep the phone unlocked (iPhone: keep the Tethercam app open)."
+            print(f"Waiting for phone: {msg}")
+            cam.send(waiting_frame(args.width, args.height, msg.splitlines()[0]))
+            time.sleep(1.5)
+        finally:
+            if stream is not None:
+                stream.close()
 
 if __name__ == "__main__":
     main()

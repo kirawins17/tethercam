@@ -4,6 +4,22 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-18
+
+### Fixed
+- Ctrl+C now always stops Tethercam cleanly, also while it waits for a phone.
+- iPhone app: if iOS closes the connection point in the background, the app opens it again. You do not need to restart the app.
+- Android: when you unplug the phone, Tethercam reconnects at once (no 20-second wait).
+- Linux: if the virtual webcam package is missing (for example on Fedora without RPM Fusion), the installer explains how to get it and installs the rest.
+
+### Security
+- `Install-Tethercam.bat` and `install.sh` attached to a release are pinned to that release, and `install.ps1` is now a checked release file too.
+- The Windows installer checks the signature of the Sideloadly installer before it runs it.
+
+### Changed
+- Releases run as a dry run on pull requests, so a broken update is found before it is merged.
+- The README says that the iPhone app sends 1280 × 720.
+
 ## [1.2.0] - 2026-11-17
 
 ### Added
@@ -53,7 +69,8 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 ### Security
 - The iPhone app accepts connections only from the USB cable, not from Wi-Fi.
 
-[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/kirawins17/tethercam/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kirawins17/tethercam/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kirawins17/tethercam/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kirawins17/tethercam/releases/tag/v1.0.0

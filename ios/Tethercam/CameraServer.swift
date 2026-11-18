@@ -3,6 +3,7 @@ import AVFoundation
 import CoreImage
 import ImageIO
 import Network
+import UIKit
 
 /// Captures the camera and serves it on a TCP port.
 ///
@@ -30,6 +31,23 @@ final class CameraServer: NSObject, ObservableObject, AVCaptureVideoDataOutputSa
     private var client: NWConnection?
     private var sending = false
     private var started = false
+
+    override init() {
+        super.init()
+        // iOS can close the listening socket while the app is in the background.
+        // When the app comes back, make sure the listener is running again.
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
+                                               object: nil, queue: nil) { [weak self] _ in
+            guard let self else { return }
+            self.queue.async {
+                guard self.started else { return }
+                var ready = false
+                if case .ready? = self.listener?.state { ready = true }
+                if !ready { self.restartListener(after: 0) }
+                if !self.session.isRunning { self.session.startRunning() }
+            }
+        }
+    }
 
     func start() {
         AVCaptureDevice.requestAccess(for: .video) { granted in
@@ -127,7 +145,8 @@ final class CameraServer: NSObject, ObservableObject, AVCaptureVideoDataOutputSa
                 case .ready:
                     self?.setStatus("Ready. Plug into your PC and run tethercam.")
                 case .failed(let error):
-                    self?.setStatus("Server error: \(error.localizedDescription)")
+                    self?.setStatus("Server error: \(error.localizedDescription). Restarting…")
+                    self?.restartListener(after: 1)
                 default:
                     break
                 }
@@ -136,6 +155,17 @@ final class CameraServer: NSObject, ObservableObject, AVCaptureVideoDataOutputSa
             self.listener = listener
         } catch {
             setStatus("Could not open port \(Self.port): \(error.localizedDescription)")
+        }
+    }
+
+    /// Close the listener and open a new one. Runs on `queue`.
+    private func restartListener(after seconds: Double) {
+        listener?.stateUpdateHandler = nil
+        listener?.cancel()
+        listener = nil
+        queue.asyncAfter(deadline: .now() + seconds) { [weak self] in
+            guard let self, self.listener == nil else { return }
+            self.startListener()
         }
     }
 

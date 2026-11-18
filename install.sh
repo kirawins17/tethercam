@@ -7,6 +7,7 @@
 set -euo pipefail
 
 REPO="kirawins17/tethercam"
+PINNED_TAG=""   # the copy attached to a release sets this to that release
 DEST="${XDG_DATA_HOME:-$HOME/.local/share}/tethercam"
 
 say()  { printf '%s\n' "$*"; }
@@ -20,13 +21,17 @@ else say "Your package manager is not supported. See the README to install by ha
 fi
 
 case "$PM" in
-  apt)    PKGS="python3 python3-venv python3-pip v4l2loopback-dkms usbmuxd libimobiledevice-utils adb libgl1 curl"
+  apt)    PKGS="python3 python3-venv python3-pip usbmuxd libimobiledevice-utils adb libgl1 curl"
+          VCAM="v4l2loopback-dkms"
           INSTALL="sudo apt-get install -y" ;;
-  dnf)    PKGS="python3 python3-pip v4l2loopback usbmuxd libimobiledevice-utils android-tools mesa-libGL curl"
+  dnf)    PKGS="python3 python3-pip usbmuxd libimobiledevice-utils android-tools mesa-libGL curl"
+          VCAM="v4l2loopback"   # in RPM Fusion: https://rpmfusion.org/Configuration
           INSTALL="sudo dnf install -y" ;;
-  pacman) PKGS="python python-pip v4l2loopback-dkms usbmuxd libimobiledevice android-tools mesa curl"
+  pacman) PKGS="python python-pip usbmuxd libimobiledevice android-tools mesa curl"
+          VCAM="v4l2loopback-dkms"
           INSTALL="sudo pacman -S --needed --noconfirm" ;;
-  zypper) PKGS="python3 python3-pip v4l2loopback-kmp-default usbmuxd libimobiledevice-tools android-tools Mesa-libGL1 curl"
+  zypper) PKGS="python3 python3-pip usbmuxd libimobiledevice-tools android-tools Mesa-libGL1 curl"
+          VCAM="v4l2loopback-kmp-default"
           INSTALL="sudo zypper install -y" ;;
 esac
 
@@ -56,9 +61,24 @@ if [ "$PM" = apt ]; then
 fi
 # shellcheck disable=SC2086
 if ! $INSTALL $PKGS; then
-  say "Some packages could not be installed. On Fedora, v4l2loopback is in RPM Fusion."
-  say "Install what is missing, then run this installer again."
+  say "Some packages could not be installed. Install what is missing, then run this installer again."
   exit 1
+fi
+
+# The virtual webcam package is separate: on some systems (Fedora) it is in an extra repository.
+VCAM_OK=1
+# shellcheck disable=SC2086
+if ! $INSTALL $VCAM; then
+  VCAM_OK=0
+  say ""
+  say "    Could not install $VCAM (the virtual webcam)."
+  if [ "$PM" = dnf ]; then
+    say "    On Fedora it is in RPM Fusion. Turn it on (https://rpmfusion.org/Configuration),"
+    say "    then run: sudo dnf install v4l2loopback"
+  else
+    say "    Install it with your package manager, then restart the PC."
+  fi
+  say "    The rest of Tethercam will still be installed."
 fi
 
 step "Virtual webcam (v4l2loopback)"
@@ -66,7 +86,7 @@ echo "v4l2loopback" | sudo tee /etc/modules-load.d/tethercam.conf >/dev/null
 echo "options v4l2loopback devices=1 exclusive_caps=1 card_label=tethercam" \
   | sudo tee /etc/modprobe.d/tethercam.conf >/dev/null
 sudo modprobe -r v4l2loopback 2>/dev/null || true
-if sudo modprobe v4l2loopback devices=1 exclusive_caps=1 card_label=tethercam; then
+if [ "$VCAM_OK" = 1 ] && sudo modprobe v4l2loopback devices=1 exclusive_caps=1 card_label=tethercam; then
   say "    Ready."
 else
   say "    Could not load it now. Restart the PC once (with Secure Boot, you may need to enroll the module key)."
@@ -77,13 +97,18 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$DEST"
 # Install the code of the latest release, so the PC part matches the iPhone app.
-TAG="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
-  | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n 1 || true)"
+TAG="$PINNED_TAG"
+if [ -z "$TAG" ]; then
+  TAG="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+    | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n 1 || true)"
+fi
 if [ -n "$TAG" ]; then
   say "    Version $TAG"
   SRC_URL="https://github.com/$REPO/archive/refs/tags/$TAG.tar.gz"
+  IPA_URL="https://github.com/$REPO/releases/download/$TAG/Tethercam.ipa"
 else
   SRC_URL="https://github.com/$REPO/archive/refs/heads/main.tar.gz"
+  IPA_URL="https://github.com/$REPO/releases/latest/download/Tethercam.ipa"
 fi
 curl -fsSL "$SRC_URL" | tar xz -C "$TMP"
 SRC_DIR="$(find "$TMP" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
@@ -91,7 +116,7 @@ cp -r "$SRC_DIR/pc/." "$DEST/"
 chmod +x "$DEST/start-tethercam.sh"
 python3 -m venv "$DEST/.venv"
 "$DEST/.venv/bin/pip" install -q --disable-pip-version-check -r "$DEST/requirements.txt"
-curl -fsSL -o "$DEST/Tethercam.ipa" "https://github.com/$REPO/releases/latest/download/Tethercam.ipa" \
+curl -fsSL -o "$DEST/Tethercam.ipa" "$IPA_URL" \
   || say "    Could not download Tethercam.ipa. Get it from https://github.com/$REPO/releases"
 
 mkdir -p "$HOME/.local/share/applications"

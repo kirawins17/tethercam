@@ -197,4 +197,7 @@ def frames(serial=None, facing="back", max_size=1280, max_fps=30):
                 server.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 server.kill()
-        _run(adb, "forward", "--remove", f"tcp:{port}", serial=serial)
+        try:  # if the phone was unplugged, adb may hang; don't wait for it
+            _run(adb, "forward", "--remove", f"tcp:{port}", serial=serial, timeout=5)
+        except (OSError, subprocess.SubprocessError):
+            pass

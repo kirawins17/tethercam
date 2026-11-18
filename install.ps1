@@ -140,8 +140,21 @@ if ($wantIphone) {
         $setup = Join-Path $env:TEMP 'SideloadlySetup64.exe'
         try {
             Invoke-WebRequest -UseBasicParsing 'https://sideloadly.io/SideloadlySetup64.exe' -OutFile $setup
-            Say '    Opening the Sideloadly installer. Click through it, then come back here.'
-            Start-Process $setup -Wait
+            $sig = Get-AuthenticodeSignature $setup
+            $run = $true
+            if ($sig.Status -eq 'Valid') {
+                Say "    Signature OK: $($sig.SignerCertificate.Subject)" 'Green'
+            } else {
+                Say "    Warning: the Sideloadly installer is not signed in a way Windows can check ($($sig.Status))." 'Yellow'
+                Say '    It was downloaded from https://sideloadly.io/ over HTTPS.' 'Yellow'
+                $run = (Read-Host '    Run it anyway? Type Y to run, or press Enter to skip') -match '^[Yy]'
+            }
+            if ($run) {
+                Say '    Opening the Sideloadly installer. Click through it, then come back here.'
+                Start-Process $setup -Wait
+            } else {
+                Say '    Skipped. You can install Sideloadly later from https://sideloadly.io/' 'Yellow'
+            }
             Remove-Item $setup -ErrorAction SilentlyContinue
         } catch {
             Say '    Could not download Sideloadly. Opening its website...' 'Yellow'
@@ -158,13 +171,19 @@ if ($wantAndroid) {
 }
 
 Step 'Tethercam'
-# Install the code of the latest release, so the PC part matches the iPhone app.
-try {
-    $tag = (Invoke-RestMethod -UseBasicParsing "https://api.github.com/repos/$repo/releases/latest").tag_name
+# Install one release, so the PC part matches the iPhone app.
+# The installer attached to a release sets TETHERCAM_TAG to that release.
+$tag = $env:TETHERCAM_TAG
+if (-not $tag) {
+    try { $tag = (Invoke-RestMethod -UseBasicParsing "https://api.github.com/repos/$repo/releases/latest").tag_name } catch { }
+}
+if ($tag) {
     $zipUrl = "https://github.com/$repo/archive/refs/tags/$tag.zip"
+    $ipaUrl = "https://github.com/$repo/releases/download/$tag/Tethercam.ipa"
     Say "    Version $tag"
-} catch {
+} else {
     $zipUrl = "https://github.com/$repo/archive/refs/heads/main.zip"
+    $ipaUrl = "https://github.com/$repo/releases/latest/download/Tethercam.ipa"
 }
 $tmp = Join-Path $env:TEMP ('tethercam-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp, $dest -Force | Out-Null
@@ -177,7 +196,7 @@ Remove-Item $tmp -Recurse -Force
 if ($LASTEXITCODE -ne 0) { throw 'Could not install the Python packages. Check your internet and run the installer again.' }
 if ($wantIphone) {
     try {
-        Invoke-WebRequest -UseBasicParsing "https://github.com/$repo/releases/latest/download/Tethercam.ipa" -OutFile "$dest\Tethercam.ipa"
+        Invoke-WebRequest -UseBasicParsing $ipaUrl -OutFile "$dest\Tethercam.ipa"
     } catch {
         Say "    Could not download Tethercam.ipa. Get it from https://github.com/$repo/releases" 'Yellow'
     }
