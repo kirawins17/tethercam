@@ -4,6 +4,11 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-11-18
+
+### Fixed
+- Windows installer: finds Python installed with the Python install manager (`%LOCALAPPDATA%\Python\pythoncore-*`), and stops with a clear message instead of a PowerShell error when it cannot find `python.exe`.
+
 ## [1.4.1] - 2026-11-18
 
 ### Fixed
@@ -96,7 +101,8 @@ The first release since the repository became public. Its files have signed buil
 ### Security
 - The iPhone app accepts connections only from the USB cable, not from Wi-Fi.
 
-[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/kirawins17/tethercam/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/kirawins17/tethercam/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/kirawins17/tethercam/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/kirawins17/tethercam/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kirawins17/tethercam/compare/v1.2.0...v1.3.0

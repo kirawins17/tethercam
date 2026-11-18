@@ -18,22 +18,41 @@ function Refresh-Path {
                 [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
+function Test-PythonExe($exe) {
+    # True if $exe is a real Python 3.9 or newer (not the Microsoft Store shortcut).
+    if (-not $exe -or -not (Test-Path $exe)) { return $false }
+    if ($exe -like '*\WindowsApps\*') { return $false }
+    try {
+        $answer = & $exe -c 'import sys; print(sys.version_info >= (3, 9))' 2>$null
+        return ($LASTEXITCODE -eq 0 -and ("$answer" -match 'True'))
+    } catch { return $false }
+}
+
 function Find-Python {
-    # Returns the full path of a real python.exe (3.9+), or $null.
-    # Skips the Microsoft Store "python" stub, and looks where python.org puts it.
-    $probe = 'import sys; print(sys.executable) if sys.version_info >= (3, 9) else None'
+    # Returns the full path of a real python.exe (3.9 or newer), or $null.
+    # 1. Look in the folders where Python is installed:
+    #    the Python install manager, the python.org installer (per user), and Program Files.
+    $folders = Get-ChildItem "$env:LOCALAPPDATA\Python\pythoncore-3*\python.exe",
+                             "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe",
+                             "$env:ProgramFiles\Python3*\python.exe" -ErrorAction SilentlyContinue |
+               Sort-Object LastWriteTime -Descending | ForEach-Object { $_.FullName }
+    foreach ($c in $folders) { if (Test-PythonExe $c) { return $c } }
+    # 2. Ask the launchers where Python is. Some print extra lines, so look for our marker.
+    # Single quotes only: Windows PowerShell 5.1 drops double quotes passed to programs.
+    $probe = 'import sys; print(''TETHERCAM_PY='' + sys.executable)'
     foreach ($cmd in 'py -3', 'python', 'python3') {
         $exe, $rest = $cmd -split ' '
         $pre = @($rest | Where-Object { $_ })
         if (-not (Get-Command $exe -ErrorAction SilentlyContinue)) { continue }
         try {
-            $out = (& $exe @pre -c $probe 2>$null | Select-Object -First 1)
-            if ($LASTEXITCODE -eq 0 -and $out -and (Test-Path $out.Trim())) { return $out.Trim() }
+            $lines = & $exe @pre -c $probe 2>$null
+            $hit = @($lines) | Where-Object { "$_" -like 'TETHERCAM_PY=*' } | Select-Object -First 1
+            if ($hit) {
+                $c = ("$hit" -replace '^TETHERCAM_PY=', '').Trim()
+                if (Test-PythonExe $c) { return $c }
+            }
         } catch { }
     }
-    $found = Get-ChildItem "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe", "$env:ProgramFiles\Python3*\python.exe" -ErrorAction SilentlyContinue |
-             Sort-Object FullName -Descending | Select-Object -First 1
-    if ($found) { return $found.FullName }
     return $null
 }
 
@@ -121,6 +140,9 @@ else {
     if (-not (Has-Python)) { throw 'Python is still missing. Install it from python.org, then run this installer again.' }
 }
 $py = Find-Python
+if (-not $py) {
+    throw 'Python is installed, but the installer cannot find python.exe. Restart the PC, then run the installer again.'
+}
 Say "    Using $py"
 
 
