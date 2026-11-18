@@ -1,0 +1,30 @@
+name: Welcome new issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  welcome:
+    # The maintainer's own issues need no welcome.
+    if: github.event.issue.user.login != 'kirawins17'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Post a welcome reply
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh issue comment "$NUMBER" --repo "$REPO" --body "Thanks for opening this issue! A maintainer will reply within 1 to 2 days.
+
+          While you wait:
+          - Check [Problems?](https://github.com/kirawins17/tethercam#problems) in the README. It has the most common fixes.
+          - For a bug, please add the text from the Tethercam window and the output of \`tethercam --version\` (or \`python tethercam.py --version\`).
+          - Please do not post an Apple ID, phone number or serial number here.
+
+          If this is a security problem, please close this issue and report it privately: https://github.com/kirawins17/tethercam/security/advisories/new"

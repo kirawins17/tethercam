@@ -4,6 +4,9 @@ All important changes are in this file. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Added
+- Every new issue gets a welcome reply within a minute, with the most common fixes and what to include.
+
 ## [1.4.0] - 2026-11-18
 
 The first release since the repository became public. Its files have signed build provenance.
